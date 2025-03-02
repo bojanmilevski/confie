@@ -25,4 +25,3 @@
 - set-and-forget entries
   - once backed-up, no further backups are made
   - ex. discord config file, gtk config files - files change often, are filled with unwanted junk, but we only want the config file to remain that way
-
