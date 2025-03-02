@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <concepts>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
@@ -6,6 +7,7 @@
 #include <iostream>
 #include <print>
 #include <range/v3/range.hpp>
+#include <range/v3/range/operations.hpp>
 #include <set>
 
 enum Error {
@@ -15,18 +17,50 @@ enum Error {
   NOT_FILE,
 };
 
-struct ConfigFile {
+template <typename F>
+concept FilesystemEntry = requires(F f) {
+  { std::filesystem::is_regular_file(f) } -> std::convertible_to<bool>;
+  { std::filesystem::is_directory(f) } -> std::convertible_to<bool>;
+};
+
+struct EntryOptions {
+public:
+  [[nodiscard]] explicit EntryOptions() : set_and_forget{false}, keep_on_remote{false}, ignore{false} {}
+
 private:
-  const std::filesystem::path m_config_file;
-  const std::set<std::filesystem::path> m_paths;
+  const bool set_and_forget;
+  const bool keep_on_remote;
+  const bool ignore;
+};
 
-  [[nodiscard]] explicit ConfigFile(const std::filesystem::path&& config_file,
-                                    const std::set<std::filesystem::path>&& paths)
-      : m_config_file(std::move(config_file)), m_paths(std::move(paths)) {}
+struct File {
+public:
+  [[nodiscard]] explicit File() : m_path{}, m_options{} {}
 
+private:
+  const std::filesystem::path m_path;
+  const EntryOptions m_options;
+};
+
+struct Folder {
+public:
+  [[nodiscard]] explicit Folder() : m_path{}, m_entries{}, m_options{} {}
+
+private:
+  const std::filesystem::path m_path;
+  const std::set<std::filesystem::path> m_entries;
+  const EntryOptions m_options;
+};
+
+struct Preset {
+public:
+private:
+};
+
+struct ConfigurationFile {
 public:
   [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path)
-      -> std::expected<ConfigFile, Error> {
+      -> std::expected<ConfigurationFile, Error> {
     std::filesystem::path config_file{};
 
     if (path.has_value()) {
@@ -55,14 +89,23 @@ public:
       paths.insert(line);
     }
 
-    return ConfigFile(std::move(config_file), std::move(paths));
+    return ConfigurationFile(std::move(config_file), std::move(paths));
   }
 
   [[nodiscard]] const std::set<std::filesystem::path> get_paths() const { return m_paths; }
+
+private:
+  const std::filesystem::path m_config_file;
+  const std::set<std::filesystem::path> m_paths;
+  const std::set<Preset> m_presets{};
+
+  [[nodiscard]] explicit ConfigurationFile(const std::filesystem::path&& config_file,
+                                           const std::set<std::filesystem::path>&& paths)
+      : m_config_file(std::move(config_file)), m_paths(std::move(paths)), m_presets{} {}
 };
 
 // FIX:: std::ranges::transform
-auto iterate(const ConfigFile&& config_file) -> std::expected<std::set<std::filesystem::path>, Error> {
+auto iterate(const ConfigurationFile&& config_file) -> std::expected<std::set<std::filesystem::path>, Error> {
   std::set<std::filesystem::path> paths{};
   std::ranges::for_each(config_file.get_paths(), [&](const auto& path) {
     if (std::filesystem::is_regular_file(path)) {
@@ -91,7 +134,7 @@ auto main(const int argc, const char* argv[]) -> int {
     config_file_path = std::filesystem::path(argv[1]);
   }
 
-  const auto config_file = ConfigFile::create(std::move(config_file_path));
+  const auto config_file = ConfigurationFile::create(std::move(config_file_path));
   if (!config_file.has_value()) {
     if (config_file.error() == Error::NOT_EXIST) {
       std::println(stderr, "Configuration does not exist!");
