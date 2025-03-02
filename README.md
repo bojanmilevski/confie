@@ -40,11 +40,11 @@ Here is a list of what `confie` does:
   when you reinstall your system.
 - Ability to make time-based backups. This marks your repos with a timestamp.
 - Differently named backups for a single preset.
-- Except the configuration files, no other files are required for cronie to
+- Except the configuration files, no other files are required for `confie` to
   work.
 - Integrates with `cronie`.
 
-Here is a list of what `cronie` does not do:
+Here is a list of what `confie` does not do:
 
 - The need of special configuration, metadata or cache files.
 - Enforce a certain VCS.
@@ -54,14 +54,64 @@ Here is a list of what `cronie` does not do:
 
 ## INSTRUCTIONS
 
-- Create a configuration file
-  - Either in `~/.config/confie/config.toml`
-  - or provide one: `confie ./config.toml`
-  - example config file can be seen in `TODO`
+### MAIN CONFIGURATION FILE
+
+`confie` requires a single configuration file to run.
+
+- Either in `~/.config/confie/config.toml`
+- or provide one: `confie ./config.toml`
+- An example config file can be seen in `TODO`:
+
+```toml
+TODO
+```
+
+#### PRESETS
+
+The "main" configuration file is able to point to presets:
+
+`~/.config/confie/config.toml`:
+
+```toml
+TODO
+```
+
+`~/.config/confie/dotfiles.toml`:
+
+```toml
+TODO
+```
+
+`~/.config/confie/system-configs.toml`:
+
+```toml
+TODO
+```
+
+### RUNNING
+
+#### BACKUP
+
+To run `confie`:
+
+- If no config file is provided, just run `confie backup`
+- `confie backup ./config.toml` to provide one.
+
+#### DEPLOY
+
+TODO
+
+### CRONIE
+
+Here is a simple `cronie` command that runs every 3 hours:
+
+```sh
+* */3 * * * confie backup
+```
 
 ## LICENSE
 
-This software is licensed under the [GPL v3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html).
+This software, like all my other software, is licensed under the [GPL v3.0 License](https://www.gnu.org/licenses/gpl-3.0.en.html).
 
 ## SPECIAL THANKS
 
