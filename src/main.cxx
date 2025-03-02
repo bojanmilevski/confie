@@ -5,7 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <print>
-#include <range/v3/all.hpp>
+#include <range/v3/range.hpp>
 #include <set>
 
 enum Error {
@@ -20,25 +20,21 @@ private:
   const std::filesystem::path m_config_file;
   const std::set<std::filesystem::path> m_paths;
 
-  [[nodiscard]] explicit ConfigFile(
-      const std::filesystem::path&& config_file,
-      const std::set<std::filesystem::path>&& paths)
+  [[nodiscard]] explicit ConfigFile(const std::filesystem::path&& config_file,
+                                    const std::set<std::filesystem::path>&& paths)
       : m_config_file(std::move(config_file)), m_paths(std::move(paths)) {}
 
 public:
-  [[nodiscard]] static auto
-  create(const std::optional<std::filesystem::path>&& config_file_path)
+  [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path)
       -> std::expected<ConfigFile, Error> {
     std::filesystem::path config_file{};
 
-    if (config_file_path.has_value()) {
-      config_file = std::filesystem::path(std::move(config_file_path.value()));
+    if (path.has_value()) {
+      config_file = std::filesystem::path(*path);
     } else {
-      const auto home = std::move(std::getenv("HOME"));
-      const auto path_as_str =
-          std::string(std::move(home))
-              .append(std::move("/.config/confie/config.toml"));
-      config_file = std::move(std::filesystem::path(std::move(path_as_str)));
+      const auto home = std::getenv("HOME");
+      const auto path_as_str = std::string(home).append("/.config/confie/config.toml");
+      config_file = std::filesystem::path(path_as_str);
     }
 
     if (!std::filesystem::exists(config_file)) {
@@ -62,25 +58,20 @@ public:
     return ConfigFile(std::move(config_file), std::move(paths));
   }
 
-  operator std::filesystem::path() const { return m_config_file; }
-
-  [[nodiscard]] const std::set<std::filesystem::path> get_paths() const {
-    return m_paths;
-  }
+  [[nodiscard]] const std::set<std::filesystem::path> get_paths() const { return m_paths; }
 };
 
-auto iterate(const ConfigFile&& config_file)
-    -> std::expected<std::set<std::filesystem::path>, Error> {
+// FIX:: std::ranges::transform
+auto iterate(const ConfigFile&& config_file) -> std::expected<std::set<std::filesystem::path>, Error> {
   std::set<std::filesystem::path> paths{};
-
   std::ranges::for_each(config_file.get_paths(), [&](const auto& path) {
     if (std::filesystem::is_regular_file(path)) {
-      paths.insert(path);
+      paths.insert(std::move(path));
     } else if (std::filesystem::is_directory(path)) {
-      const auto iterator = std::filesystem::recursive_directory_iterator(path);
-      std::ranges::for_each(iterator, [&](const auto& e) {
-        if (std::filesystem::is_regular_file(e)) {
-          paths.insert(e);
+      const auto iterator = std::filesystem::recursive_directory_iterator(std::move(path));
+      std::ranges::for_each(iterator, [&](const auto& p) {
+        if (std::filesystem::is_regular_file(p)) {
+          paths.insert(std::move(p));
         }
       });
     }
@@ -92,12 +83,12 @@ auto iterate(const ConfigFile&& config_file)
 auto main(const int argc, const char* argv[]) -> int {
   std::optional<std::filesystem::path> config_file_path{};
 
-  if (argc != 2) {
+  if (argc > 2) {
     std::println(stderr, "One optional argument [config file] is allowed. If "
                          "not provided, ~/.config/confie/config.toml is used.");
     return EXIT_FAILURE;
-  } else {
-    config_file_path = std::optional(argv[1]);
+  } else if (argc == 2) {
+    config_file_path = std::filesystem::path(argv[1]);
   }
 
   const auto config_file = ConfigFile::create(std::move(config_file_path));
@@ -115,7 +106,7 @@ auto main(const int argc, const char* argv[]) -> int {
     return config_file.error();
   }
 
-  const auto res = iterate(std::move(config_file.value()));
+  const auto res = iterate(std::move(*config_file));
   if (!res.has_value()) {
     std::println(stderr, "Error iterating!");
     return res.error();

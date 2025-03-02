@@ -1,1 +1,2 @@
-add_executable(confie main.cxx)
+add_executable(confie)
+target_sources(confie PUBLIC main.cxx)
