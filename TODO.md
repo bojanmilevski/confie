@@ -1,0 +1,28 @@
+- easily integrates with already existing dotfile repos - no overhead
+- non-opinionated
+- intended to use with cron
+- toml config file
+- ? cli flags
+  - destination path
+  - source files/folders
+- templates
+  - for different users/system files
+  - stored in different folders
+- integrates well with vcs
+  - keeps license, readme, changelog, todo type files
+- compares files/folders to determine if a change is needed
+- option to keep/delete files/folders that have been deleted since last backup
+  - user decides through an option
+  - example scenario
+    - user backs-up folder `~/.config/nvim`
+    - old backup had `~/.config/nvim/lua/plugins/lsp.lua`
+    - deleted between backups
+    - new backup should decide whether to delete the old file or keep it.
+- deploy configuration to system
+- keeps multiple timed backups (weekly, daily, monthly)
+  - integrates with cron
+- named backups
+- set-and-forget entries
+  - once backed-up, no further backups are made
+  - ex. discord config file, gtk config files - files change often, are filled with unwanted junk, but we only want the config file to remain that way
+
