@@ -1,5 +1,4 @@
 #include <algorithm>
-#include <concepts>
 #include <cstdlib>
 #include <expected>
 #include <filesystem>
@@ -7,49 +6,51 @@
 #include <iostream>
 #include <print>
 #include <range/v3/range.hpp>
-#include <range/v3/range/operations.hpp>
 #include <set>
+#include <variant>
 
-enum Error {
+enum ErrorType {
   FILE_READ,
   NOT_DIR,
   NOT_EXIST,
   NOT_FILE,
 };
 
-template <typename F>
-concept FilesystemEntry = requires(F f) {
-  { std::filesystem::is_regular_file(f) } -> std::convertible_to<bool>;
-  { std::filesystem::is_directory(f) } -> std::convertible_to<bool>;
-};
-
-struct EntryOptions {
+struct Error {
 public:
-  [[nodiscard]] explicit EntryOptions() : set_and_forget{false}, keep_on_remote{false}, ignore{false} {}
+  static auto create(const ErrorType&& error_type, const std::string&& message) -> std::unexpected<Error> {
+    return std::unexpected(Error(std::move(error_type), std::move(message)));
+  }
+
+  [[nodiscard]] auto get_message() const -> std::string { return m_message; }
+
+  [[nodiscard]] auto get_error() const -> ErrorType { return m_error_type; }
 
 private:
-  const bool set_and_forget;
-  const bool keep_on_remote;
-  const bool ignore;
+  const ErrorType m_error_type;
+  const std::string m_message;
+
+  [[nodiscard]] explicit Error(const ErrorType&& error_type, const std::string&& message)
+      : m_error_type{std::move(error_type)}, m_message{std::move(message)} {}
 };
+
+template <typename R> using expected = std::expected<R, Error>;
 
 struct File {
 public:
-  [[nodiscard]] explicit File() : m_path{}, m_options{} {}
+  [[nodiscard]] explicit File() : m_path{} {}
 
 private:
   const std::filesystem::path m_path;
-  const EntryOptions m_options;
 };
 
 struct Folder {
 public:
-  [[nodiscard]] explicit Folder() : m_path{}, m_entries{}, m_options{} {}
+  [[nodiscard]] explicit Folder() : m_path{}, m_entries{} {}
 
 private:
   const std::filesystem::path m_path;
-  const std::set<std::filesystem::path> m_entries;
-  const EntryOptions m_options;
+  const std::set<std::variant<File, Folder>> m_entries;
 };
 
 struct Preset {
@@ -59,40 +60,45 @@ private:
 
 struct ConfigurationFile {
 public:
-  [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path)
-      -> std::expected<ConfigurationFile, Error> {
+  [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path) -> expected<ConfigurationFile> {
     std::filesystem::path config_file{};
+    const auto home = std::getenv("HOME");
 
     if (path.has_value()) {
       config_file = std::filesystem::path(*path);
     } else {
-      const auto home = std::getenv("HOME");
       const auto path_as_str = std::string(home).append("/.config/confie/config.toml");
       config_file = std::filesystem::path(path_as_str);
     }
 
     if (!std::filesystem::exists(config_file)) {
-      return std::unexpected(Error::NOT_EXIST);
+      return Error::create(NOT_EXIST, "Configuration file does not exist.");
     } else if (!std::filesystem::is_regular_file(config_file)) {
-      return std::unexpected(Error::NOT_FILE);
+      return Error::create(NOT_FILE, "Configuration is not a file.");
     }
 
     std::ifstream file(config_file);
     if (!file.is_open()) {
-      return std::unexpected(Error::FILE_READ);
+      return Error::create(FILE_READ, "Failed reading configuration file.");
     }
 
     std::string line{};
     std::set<std::filesystem::path> paths{};
 
     while (std::getline(file, line)) {
-      paths.insert(line);
+      if (line.length() > 0) {
+        if (line.at(0) == '~') {
+          line = home + line.substr(1);
+        }
+
+        paths.insert(std::filesystem::path(line));
+      }
     }
 
     return ConfigurationFile(std::move(config_file), std::move(paths));
   }
 
-  [[nodiscard]] const std::set<std::filesystem::path> get_paths() const { return m_paths; }
+  [[nodiscard]] auto get_paths() const -> std::set<std::filesystem::path> { return m_paths; }
 
 private:
   const std::filesystem::path m_config_file;
@@ -105,7 +111,7 @@ private:
 };
 
 // FIX:: std::ranges::transform
-auto iterate(const ConfigurationFile&& config_file) -> std::expected<std::set<std::filesystem::path>, Error> {
+auto iterate(const ConfigurationFile&& config_file) -> std::set<std::filesystem::path> {
   std::set<std::filesystem::path> paths{};
   std::ranges::for_each(config_file.get_paths(), [&](const auto& path) {
     if (std::filesystem::is_regular_file(path)) {
@@ -136,25 +142,12 @@ auto main(const int argc, const char* argv[]) -> int {
 
   const auto config_file = ConfigurationFile::create(std::move(config_file_path));
   if (!config_file.has_value()) {
-    if (config_file.error() == Error::NOT_EXIST) {
-      std::println(stderr, "Configuration does not exist!");
-    } else if (config_file.error() == Error::NOT_DIR) {
-      std::println(stderr, "Configuration is not a regular file!");
-    } else if (config_file.error() == Error::FILE_READ) {
-      std::println(stderr, "Error reading configuration file!");
-    } else {
-      std::println(stderr, "Unknown error occured!");
-    }
-
-    return config_file.error();
+    std::println(stderr, "Error: {}", config_file.error().get_message());
+    return config_file.error().get_error();
   }
 
-  const auto res = iterate(std::move(*config_file));
-  if (!res.has_value()) {
-    std::println(stderr, "Error iterating!");
-    return res.error();
-  }
+  const auto entries = iterate(std::move(*config_file));
+  std::ranges::for_each(entries, [&](const auto& e) { std::cout << e << '\n'; });
 
-  std::ranges::for_each(*res, [&](const auto& e) { std::cout << e << '\n'; });
   return EXIT_SUCCESS;
 }
