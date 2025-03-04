@@ -49,7 +49,7 @@ public:
   [[nodiscard]] explicit Folder() : m_path{}, m_entries{} {}
 
 private:
-  const std::filesystem::path m_path;
+  const std::filesystem::directory_entry m_path;
   const std::set<std::variant<File, Folder>> m_entries;
 };
 
@@ -57,7 +57,7 @@ struct Group {
 public:
 private:
   std::string m_name;
-  std::filesystem::path m_destination;
+  std::filesystem::directory_entry m_destination;
   std::set<std::filesystem::path> m_include;
   std::optional<std::set<std::filesystem::path>> m_exclude;
   std::optional<std::set<std::filesystem::path>> m_archive;
@@ -67,23 +67,23 @@ private:
 struct Configuration {
 public:
   [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path) -> expected<Configuration> {
-    std::filesystem::path config_file{};
+    std::filesystem::path config_file_path{};
     const auto home = std::getenv("HOME");
 
     if (path.has_value()) {
-      config_file = std::filesystem::path(*path);
+      config_file_path = std::filesystem::path(*path);
     } else {
-      const auto path_as_str = std::string(home).append("/.config/confie/config.toml");
-      config_file = std::filesystem::path(path_as_str);
+      const auto path_str = std::string(home).append("/.config/confie/config.toml");
+      config_file_path = std::filesystem::path(path_str);
     }
 
-    if (!std::filesystem::exists(config_file)) {
+    if (!std::filesystem::exists(config_file_path)) {
       return Error::create(NOT_EXIST, "Configuration file does not exist.");
-    } else if (!std::filesystem::is_regular_file(config_file)) {
+    } else if (!std::filesystem::is_regular_file(config_file_path)) {
       return Error::create(NOT_FILE, "Configuration is not a file.");
     }
 
-    std::ifstream file(config_file);
+    std::ifstream file(config_file_path);
     if (!file.is_open()) {
       return Error::create(FILE_READ, "Failed reading configuration file.");
     }
@@ -101,25 +101,23 @@ public:
       }
     }
 
-    return Configuration(std::move(config_file), std::move(paths));
+    return Configuration(std::move(paths));
   }
 
   [[nodiscard]] auto get_paths() const -> std::set<std::filesystem::path> { return m_paths; }
 
 private:
-  const std::filesystem::path m_config_file;
   const std::set<std::filesystem::path> m_paths;
   const std::set<Group> m_groups{};
 
-  [[nodiscard]] explicit Configuration(const std::filesystem::path&& config_file,
-                                       const std::set<std::filesystem::path>&& paths)
-      : m_config_file(std::move(config_file)), m_paths(std::move(paths)), m_groups{} {}
+  [[nodiscard]] explicit Configuration(const std::set<std::filesystem::path>&& paths)
+      : m_paths(std::move(paths)), m_groups{} {}
 };
 
 // FIX:: std::ranges::transform
-auto iterate(const Configuration&& config_file) -> std::set<std::filesystem::path> {
+auto iterate(const Configuration&& config) -> std::set<std::filesystem::path> {
   std::set<std::filesystem::path> paths{};
-  std::ranges::for_each(config_file.get_paths(), [&](const auto& path) {
+  std::ranges::for_each(config.get_paths(), [&](const auto& path) {
     if (std::filesystem::is_regular_file(path)) {
       paths.insert(std::move(path));
     } else if (std::filesystem::is_directory(path)) {
