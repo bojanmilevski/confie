@@ -53,14 +53,20 @@ private:
   const std::set<std::variant<File, Folder>> m_entries;
 };
 
-struct Preset {
+struct Group {
 public:
 private:
+  std::string m_name;
+  std::filesystem::path m_destination;
+  std::set<std::filesystem::path> m_include;
+  std::set<std::filesystem::path> m_exclude;
+  std::set<std::filesystem::path> m_archive;
+  std::set<std::filesystem::path> m_protect;
 };
 
-struct ConfigurationFile {
+struct Configuration {
 public:
-  [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path) -> expected<ConfigurationFile> {
+  [[nodiscard]] static auto create(const std::optional<std::filesystem::path>&& path) -> expected<Configuration> {
     std::filesystem::path config_file{};
     const auto home = std::getenv("HOME");
 
@@ -95,7 +101,7 @@ public:
       }
     }
 
-    return ConfigurationFile(std::move(config_file), std::move(paths));
+    return Configuration(std::move(config_file), std::move(paths));
   }
 
   [[nodiscard]] auto get_paths() const -> std::set<std::filesystem::path> { return m_paths; }
@@ -103,15 +109,15 @@ public:
 private:
   const std::filesystem::path m_config_file;
   const std::set<std::filesystem::path> m_paths;
-  const std::set<Preset> m_presets{};
+  const std::set<Group> m_groups{};
 
-  [[nodiscard]] explicit ConfigurationFile(const std::filesystem::path&& config_file,
-                                           const std::set<std::filesystem::path>&& paths)
-      : m_config_file(std::move(config_file)), m_paths(std::move(paths)), m_presets{} {}
+  [[nodiscard]] explicit Configuration(const std::filesystem::path&& config_file,
+                                       const std::set<std::filesystem::path>&& paths)
+      : m_config_file(std::move(config_file)), m_paths(std::move(paths)), m_groups{} {}
 };
 
 // FIX:: std::ranges::transform
-auto iterate(const ConfigurationFile&& config_file) -> std::set<std::filesystem::path> {
+auto iterate(const Configuration&& config_file) -> std::set<std::filesystem::path> {
   std::set<std::filesystem::path> paths{};
   std::ranges::for_each(config_file.get_paths(), [&](const auto& path) {
     if (std::filesystem::is_regular_file(path)) {
@@ -130,23 +136,23 @@ auto iterate(const ConfigurationFile&& config_file) -> std::set<std::filesystem:
 }
 
 auto main(const int argc, const char* argv[]) -> int {
-  std::optional<std::filesystem::path> config_file_path{};
+  std::optional<std::filesystem::path> config_path{};
 
   if (argc > 2) {
     std::println(stderr, "One optional argument [config file] is allowed. If "
                          "not provided, ~/.config/confie/config.toml is used.");
     return EXIT_FAILURE;
   } else if (argc == 2) {
-    config_file_path = std::filesystem::path(argv[1]);
+    config_path = std::filesystem::path(argv[1]);
   }
 
-  const auto config_file = ConfigurationFile::create(std::move(config_file_path));
-  if (!config_file.has_value()) {
-    std::println(stderr, "Error: {}", config_file.error().get_message());
-    return config_file.error().get_error();
+  const auto config = Configuration::create(std::move(config_path));
+  if (!config.has_value()) {
+    std::println(stderr, "Error: {}", config.error().get_message());
+    return config.error().get_error();
   }
 
-  const auto entries = iterate(std::move(*config_file));
+  const auto entries = iterate(std::move(*config));
   std::ranges::for_each(entries, [&](const auto& e) { std::cout << e << '\n'; });
 
   return EXIT_SUCCESS;

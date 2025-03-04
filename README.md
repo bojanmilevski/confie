@@ -24,8 +24,8 @@ just that. It does not touch `.git`, `.svn`, `README`, `LICENSE` and the sort.
 
 Here is a list of what `confie` does:
 
-- Reads a configuration file of your presets.
-  - A preset is just a pre-configured collection of configuration files.
+- Reads a configuration file of your groups.
+  - A group is just a pre-configured collection of configuration files.
     - You might want to backup your dotfiles to one repository.
     - Backup your `/etc`, `/var` files to another one.
 - Option to ignore certain files in a directory.
@@ -39,7 +39,7 @@ Here is a list of what `confie` does:
 - Option to deploy a system backup from a remote repository. This is great for
   when you reinstall your system.
 - Ability to make time-based backups. This marks your repos with a timestamp.
-- Differently named backups for a single preset.
+- Differently named backups for a single group.
 - Except the configuration files, no other files are required for `confie` to
   work.
 - Integrates with `cronie`.
@@ -66,9 +66,9 @@ Here is a list of what `confie` does not do:
 TODO
 ```
 
-#### PRESETS
+#### GROUPS
 
-The "main" configuration file is able to point to presets:
+The "main" configuration file is able to point to groups:
 
 `~/.config/confie/config.toml`:
 

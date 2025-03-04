@@ -2,3 +2,4 @@
 ~/.config/btop
 ~/.config/discord/settings.json
 ~/.config/ruff/ruff.toml
+/etc/ssh
