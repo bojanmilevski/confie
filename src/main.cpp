@@ -59,9 +59,9 @@ private:
   std::string m_name;
   std::filesystem::path m_destination;
   std::set<std::filesystem::path> m_include;
-  std::set<std::filesystem::path> m_exclude;
-  std::set<std::filesystem::path> m_archive;
-  std::set<std::filesystem::path> m_protect;
+  std::optional<std::set<std::filesystem::path>> m_exclude;
+  std::optional<std::set<std::filesystem::path>> m_archive;
+  std::optional<std::set<std::filesystem::path>> m_protect;
 };
 
 struct Configuration {
