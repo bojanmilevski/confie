@@ -1,0 +1,4 @@
+~/.config/nvim
+~/.config/btop
+~/.config/discord/settings.json
+~/.config/ruff/ruff.toml

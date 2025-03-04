@@ -1,3 +1,6 @@
-~/.config/btop
-~/.config/discord/settings.json
-~/.config/nvim
+[preset]
+name = 'dotfiles'
+include = [ '~/.config/btop', '~/.config/discord/settings.json', '~/.config/nvim' ]
+exclude = [ '~/.config/btop/btop.log' ]
+set_and_forget = [ '~/.config/btop/btop.conf' ]
+keep = [ '~/.config/btop/themes' ]
