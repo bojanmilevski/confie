@@ -5,3 +5,8 @@ include = [ '~/.config/btop', '~/.config/discord/settings.json', '~/.config/nvim
 exclude = [ '~/.config/btop/btop.log' ]
 archive = [ '~/.config/btop/btop.conf' ]
 protect = [ '~/.config/btop/themes' ]
+
+[[group]]
+name = 'configs'
+destination = '~/Desktop'
+include = [ '~/.config/atuin' ]
