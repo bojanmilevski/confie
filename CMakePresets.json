@@ -8,15 +8,16 @@
   "configurePresets": [
     {
       "name": "debug",
-      "displayName": "Debug",
+      "binaryDir": "${sourceDir}/build/${presetName}",
       "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}"
+      "cacheVariables": {
+        "DEBUG": "ON"
+      }
     },
     {
       "name": "release",
-      "displayName": "Release",
-      "generator": "Ninja",
-      "binaryDir": "${sourceDir}/build/${presetName}"
+      "binaryDir": "${sourceDir}/build/${presetName}",
+      "generator": "Ninja"
     }
   ],
   "buildPresets": [

@@ -6,4 +6,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 include($ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 
+if(DEBUG)
+  add_definitions(-DDEBUG)
+endif()
+
 add_subdirectory(src)
