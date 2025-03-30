@@ -3,11 +3,10 @@
 #include <string_view>
 
 namespace confie {
-Error::Error(const ErrorType&& error_type, const std::string_view&& message) noexcept
+Error::Error(ErrorType&& error_type, std::string_view&& message) noexcept
     : m_error_type{std::move(error_type)}, m_message{std::move(message)} {}
 
-auto Error::create(const ErrorType&& error_type, const std::string_view&& message) noexcept
-    -> const std::unexpected<Error> {
+auto Error::create(ErrorType&& error_type, std::string_view&& message) noexcept -> const std::unexpected<Error> {
   return std::unexpected(Error(std::move(error_type), std::move(message)));
 }
 

@@ -10,11 +10,10 @@
 #endif
 
 namespace confie {
-Group::Group(const std::string_view&& name, const std::filesystem::path&& destination,
-             const std::set<std::filesystem::path>&& include,
-             const std::optional<std::set<std::filesystem::path>>&& exclude,
-             const std::optional<std::set<std::filesystem::path>>&& archive,
-             const std::optional<std::set<std::filesystem::path>>&& protect) noexcept
+Group::Group(std::string_view&& name, std::filesystem::path&& destination, std::set<std::filesystem::path>&& include,
+             std::optional<std::set<std::filesystem::path>>&& exclude,
+             std::optional<std::set<std::filesystem::path>>&& archive,
+             std::optional<std::set<std::filesystem::path>>&& protect) noexcept
     : m_name{std::move(name)}, m_destination{std::move(destination)}, m_include{std::move(include)},
       m_exclude{std::move(exclude)}, m_archive{std::move(archive)}, m_protect{std::move(protect)} {}
 
@@ -42,7 +41,7 @@ auto Group::print() const& noexcept -> const void {
 #endif
 
 // FIX:: std::ranges::transform
-auto Group::iterate(const std::filesystem::path&& entry) const& noexcept -> const std::set<std::filesystem::path> {
+auto Group::iterate(const std::filesystem::path& entry) const& noexcept -> const std::set<std::filesystem::path> {
   if (std::filesystem::is_regular_file(entry)) {
     return {};
   }

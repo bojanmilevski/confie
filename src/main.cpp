@@ -3,7 +3,7 @@
 #include <optional>
 #include <print>
 
-auto main(const int argc, const char* argv[]) noexcept -> int {
+auto main(int argc, char* argv[]) noexcept -> int {
   std::optional<std::filesystem::path> config_path{};
 
   if (argc > 2) {
@@ -11,7 +11,7 @@ auto main(const int argc, const char* argv[]) noexcept -> int {
                          "not provided, ~/.config/confie/config.toml is used.");
     std::exit(confie::ErrorType::CLI_PARSE);
   } else if (argc == 2) {
-    config_path = std::filesystem::path(argv[1]);
+    config_path = std::filesystem::path(std::move(argv[1]));
   }
 
   const auto config = confie::Config::create(std::move(config_path));
