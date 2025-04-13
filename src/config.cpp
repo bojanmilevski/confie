@@ -1,3 +1,11 @@
+/*
+  FIX:
+   - before accessing a value from the toml file, check if the table contains
+   it? this might not be necessary. look into it.
+   - check if an array has empty strings ("")
+   - check if an array is empty (array=[])
+ */
+
 #include "config.hpp"
 #include "error.hpp"
 #include "group.hpp"
@@ -11,7 +19,7 @@
 namespace confie {
 auto Config::create(std::optional<std::filesystem::path>&& path) noexcept -> const expected<Config> {
   std::filesystem::path config_file_path{};
-  const static auto home = std::getenv("HOME");
+  const static auto home = std::getenv("HOME"); // FIX: make a "global" home var
 
   if (path) {
     config_file_path = std::filesystem::path(std::move(*path));
@@ -41,6 +49,7 @@ auto Config::create(std::optional<std::filesystem::path>&& path) noexcept -> con
   }
 
   std::set<Group> groups{};
+  // FIX: this lambda's return should be handled better
   t_groups->for_each([&](const auto& t_group) -> expected<void> {
     const auto table = t_group.as_table();
     if (!table) {
@@ -97,7 +106,7 @@ auto Config::print() const& noexcept -> const void {
 }
 #endif
 
-Config::Config(const std::set<Group>&& groups) noexcept : m_groups(std::move(groups)) {}
+Config::Config(std::set<Group>&& groups) noexcept : m_groups(std::move(groups)) {}
 
 auto Config::parse_optional_array(const toml::table& table, std::string_view&& name) noexcept
     -> const expected<std::optional<std::set<std::filesystem::path>>> {
@@ -136,7 +145,7 @@ auto Config::parse_path(std::string&& path) noexcept -> const std::filesystem::p
 }
 
 auto Config::parse_tilde(std::string&& path) noexcept -> const std::filesystem::path {
-  const static auto home = std::getenv("HOME");
+  const static auto home = std::getenv("HOME"); // FIX: make a "global" home var
   return {home + path.substr(1)};
 }
 } // namespace confie

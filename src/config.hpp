@@ -24,7 +24,7 @@ public:
 private:
   std::set<Group> m_groups;
 
-  [[nodiscard]] explicit Config(const std::set<Group>&&) noexcept;
+  [[nodiscard]] explicit Config(std::set<Group>&&) noexcept;
   [[nodiscard]] static auto parse_optional_array(const toml::table&, std::string_view&&) noexcept
       -> const expected<std::optional<std::set<std::filesystem::path>>>;
   [[nodiscard]] static auto parse_array(const toml::table&, std::string_view&&) noexcept
