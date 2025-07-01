@@ -9,8 +9,8 @@ Although it's name is a play on the word "configuration", `confie` is just a
 simple file/folder backup manager. In essence, its nothing more than just a
 fancy copy-pasting tool that gets its values from a configuration file.
 
-The reason why its called `confie` is because its intended to integrate with
-`cronie` or similar cron daemons.
+The reason why its called `confie` is because its intended to integrate with,
+and is lightweight like `cronie`.
 
 # YET ANOTHER CONFIGURATION MANAGER?
 
@@ -24,29 +24,33 @@ just that. It does not touch `.git`, `.svn`, `README`, `LICENSE` and the sort.
 
 # FUNCTIONALITY
 
-Here is a list of what `confie` does:
+Here what `confie` does:
 
-- Reads a configuration file of your groups.
-  - A group is just a pre-configured collection of configuration files.
-    - You might want to backup your dotfiles to one repository.
-    - Backup your `/etc`, `/var` files to another one.
-- Option to ignore certain files in a directory.
-- set-and-forget backups:
-  - Is able to backup certain files just once, and never touch them again if
-    changed locally, if so told.
-- Can keep files in remote if deleted locally, if told.
-- Does not care about your VCS, not its files. `confie` only cares about the
-  files you tell it about.
-- Changes are only made to remote if local changes are detected.
-- Option to deploy a system backup from a remote repository. This is great for
-  when you reinstall your system.
-- Ability to make time-based backups. This marks your repos with a timestamp.
-- Differently named backups for a single group.
-- Except the configuration files, no other files are required for `confie` to
-  work.
+- Backup entries
+  - files
+  - folders (recursive)
+- Groups
+  - Collection of configuration files/folders.
+  - You might want to backup your dotfiles to one repository.
+  - ...or backup `/etc`, `/var` files to another one.
+- `exclude`
+  - Remove entries from a folder tree.
+- `archive`
+  - Backs up an entry **only** once and never again.
+  - Preserves the initial state of an entry.
+- `protect`
+  - Do not delete a backed-up entry if deleted locally.
+- VSC-agnostic
+  - Does not depend on a certain VCS
+  - Does not touch, nor use VCS files.
+- Backs-up **only** when changes are detected.
+- Deploy a configuration from a remote repository.
+- Time-based backups.
+- Differently named backups.
+- `.config/confie` is the only "dependency".
 - Integrates with `cronie`.
 
-Here is a list of what `confie` does not do:
+Here what `confie` does not do:
 
 - The need of special configuration, metadata or cache files.
 - Enforce a certain VCS.
@@ -54,9 +58,33 @@ Here is a list of what `confie` does not do:
 - Special configuration to keep `README`, `LICENSE` and so on.
 - Some sort of special file structure.
 
+# BUILD
+
+To build cronie, just run:
+
+```sh
+./cmake.sh
+```
+
+This script will take care of everything in order to compile and run `cronie`.
+
+By default, it builds the debug profile, which is handy in order to see more
+verbose log messages.
+
+It runs on a simple example configuration file that is reproducable on a clean
+Linux install.
+
 # USAGE
 
-TODO
+```sh
+# NOT IMPLEMENTED
+confie backup
+confie backup --configuration-file ./var.toml
+confie backup -c ./etc.toml
+confie backup --timestamp -c ./dotfiles.toml
+confie backup --watch -c ./dotfiles.toml # not recommended for cronjobs
+confie deploy "https://github.com/bojanmilevski/dots.git" "$HOME"
+```
 
 # THANKS
 
