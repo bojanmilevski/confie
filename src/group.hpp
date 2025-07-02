@@ -6,15 +6,10 @@
 #include <set>
 #include <string_view>
 
-#ifdef DEBUG
-#include <iostream>
-#endif
-
 namespace confie {
 struct Group {
 public:
   Group() = delete;
-  // Group(const Group&) = delete;
   Group& operator=(const Group&) = delete;
 
   [[nodiscard]] explicit Group(std::string_view&&, std::filesystem::path&&, std::set<std::filesystem::path>&&,
@@ -24,9 +19,7 @@ public:
 
   auto operator<(const Group&) const& -> const bool;
 
-#ifdef DEBUG
   auto print() const& noexcept -> const void;
-#endif
 
 private:
   std::string_view m_name;

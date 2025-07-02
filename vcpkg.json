@@ -1,4 +1,4 @@
 {
   "name": "confie",
-  "dependencies": ["tomlplusplus"]
+  "dependencies": ["tomlplusplus", "spdlog", "cli11"]
 }

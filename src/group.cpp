@@ -1,13 +1,10 @@
 #include "group.hpp"
+#include "spdlog/spdlog.h"
 #include <filesystem>
 #include <optional>
 #include <range/v3/view.hpp>
 #include <set>
 #include <string_view>
-
-#ifdef DEBUG
-#include <iostream>
-#endif
 
 namespace confie {
 Group::Group(std::string_view&& name, std::filesystem::path&& destination, std::set<std::filesystem::path>&& include,
@@ -19,26 +16,28 @@ Group::Group(std::string_view&& name, std::filesystem::path&& destination, std::
 
 auto Group::operator<(const Group& other) const& -> const bool { return m_name < other.m_name; }
 
-#ifdef DEBUG
 auto Group::print() const& noexcept -> const void {
-  std::cout << "Name: " << m_name << '\n';
-  std::cout << "Destination: " << m_destination << '\n';
+  spdlog::debug("Name: {}", m_name);
+  spdlog::debug("Destination: {}", m_destination.c_str());
 
-  std::ranges::for_each(m_include, [&](const auto& entry) { std::cout << "Include: " << entry << '\n'; });
+  spdlog::debug("Include:");
+  std::ranges::for_each(m_include, [&](const auto& entry) { spdlog::debug("  - {}", entry.c_str()); });
 
+  spdlog::debug("Exclude:");
   if (m_exclude.has_value()) {
-    std::ranges::for_each(*m_exclude, [&](const auto& entry) { std::cout << "Exclude: " << entry << '\n'; });
+    std::ranges::for_each(*m_exclude, [&](const auto& entry) { spdlog::debug("  - {}", entry.c_str()); });
   }
 
+  spdlog::debug("Archive:");
   if (m_archive.has_value()) {
-    std::ranges::for_each(*m_archive, [&](const auto& entry) { std::cout << "Archive: " << entry << '\n'; });
+    std::ranges::for_each(*m_archive, [&](const auto& entry) { spdlog::debug("  - {}", entry.c_str()); });
   }
 
+  spdlog::debug("Protect:");
   if (m_protect.has_value()) {
-    std::ranges::for_each(*m_protect, [&](const auto& entry) { std::cout << "Protect: " << entry << '\n'; });
+    std::ranges::for_each(*m_protect, [&](const auto& entry) { spdlog::debug("  - {}", entry.c_str()); });
   }
 }
-#endif
 
 // FIX:: std::ranges::transform
 auto Group::iterate(const std::filesystem::path& entry) const& noexcept -> const std::set<std::filesystem::path> {

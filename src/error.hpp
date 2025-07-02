@@ -5,19 +5,12 @@
 
 namespace confie {
 enum ErrorType {
-  CLI_PARSE,
-  CONFIG_PARSE,
-  FILE_READ,
-  NOT_DIR,
-  NOT_EXIST,
-  NOT_FILE,
   PLACEHOLDER,
 };
 
 struct Error {
 public:
   Error() = delete;
-  //  Error(const Error&) = delete;
   Error& operator=(const Error&) = delete;
   static auto create(ErrorType&&, std::string_view&&) noexcept -> const std::unexpected<Error>;
   [[nodiscard]] auto get_message() const& noexcept -> const std::string_view&;
