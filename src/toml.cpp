@@ -2,7 +2,7 @@
   FIX:
    - before accessing a value from the toml file, check if the table contains
    it? this might not be necessary. look into it.
-   - check if an array has empty strings ("")
+   - check if an array has empty string_views ("")
    - check if an array is empty (array=[])
  */
 
@@ -10,9 +10,13 @@
 #include "error.hpp"
 #include <filesystem>
 #include <set>
+#include <spdlog/spdlog.h>
+#include <string_view>
 
 namespace confie {
 auto Toml::create(std::filesystem::path&& path) noexcept -> const expected<std::set<Group>> {
+  spdlog::trace("Toml::create");
+
   const auto toml = toml::parse_file(path.c_str());
   if (!toml) {
     return Error::create(ErrorType::PLACEHOLDER, "Unable to parse toml file");
@@ -46,8 +50,7 @@ auto Toml::create(std::filesystem::path&& path) noexcept -> const expected<std::
       return Error::create(ErrorType::PLACEHOLDER, "destination");
     }
 
-    // FIX: avoid cast to std::string
-    auto destination = parse_path(std::move(std::string(**t_destination)));
+    auto destination = parse_path(std::move(**t_destination));
 
     auto include = parse_array(*table, "include");
     if (!include) {
@@ -82,6 +85,8 @@ auto Toml::create(std::filesystem::path&& path) noexcept -> const expected<std::
 
 auto Toml::parse_optional_array(const toml::table& table, std::string_view&& name) noexcept
     -> const expected<std::optional<std::set<std::filesystem::path>>> {
+  spdlog::trace("Toml::parse_optional_array");
+
   if (!table.contains(name)) {
     return {};
   }
@@ -91,6 +96,8 @@ auto Toml::parse_optional_array(const toml::table& table, std::string_view&& nam
 
 auto Toml::parse_array(const toml::table& table, std::string_view&& name) noexcept
     -> const expected<std::set<std::filesystem::path>> {
+  spdlog::trace("Toml::parse_array");
+
   const auto t_entry = table[name].as_array();
   if (!t_entry) {
     return Error::create(ErrorType::PLACEHOLDER, std::move(name));
@@ -98,9 +105,9 @@ auto Toml::parse_array(const toml::table& table, std::string_view&& name) noexce
 
   std::set<std::filesystem::path> paths{};
   t_entry->for_each([&](const auto& element) {
-    auto string = **element.as_string(); // FIX: check
-    if (string.length() > 0) {
-      const auto path = parse_path(std::move(string));
+    auto string_view = **element.as_string(); // FIX: check
+    if (string_view.length() > 0) {
+      const auto path = parse_path(std::move(string_view));
       paths.insert(std::move(path));
     }
   });
@@ -108,7 +115,9 @@ auto Toml::parse_array(const toml::table& table, std::string_view&& name) noexce
   return paths;
 }
 
-auto Toml::parse_path(std::string&& path) noexcept -> const std::filesystem::path {
+auto Toml::parse_path(std::string_view&& path) noexcept -> const std::filesystem::path {
+  spdlog::trace("Toml::parse");
+
   if (path.at(0) == '~') {
     return parse_tilde(std::move(path));
   }
@@ -116,8 +125,9 @@ auto Toml::parse_path(std::string&& path) noexcept -> const std::filesystem::pat
   return {path};
 }
 
-auto Toml::parse_tilde(std::string&& path) noexcept -> const std::filesystem::path {
+auto Toml::parse_tilde(std::string_view&& path) noexcept -> const std::filesystem::path {
+  spdlog::trace("Toml::parse_tilde");
   const static auto home = std::getenv("HOME"); // FIX: make a "global" home var
-  return {home + path.substr(1)};
+  return {home + std::string(path.substr(1))};
 }
 } // namespace confie

@@ -4,7 +4,6 @@
 #include "group.hpp"
 #include <filesystem>
 #include <set>
-#include <string>
 #include <string_view>
 #include <toml++/toml.hpp>
 
@@ -20,7 +19,7 @@ private:
       -> const expected<std::optional<std::set<std::filesystem::path>>>;
   [[nodiscard]] static auto parse_array(const toml::table&, std::string_view&&) noexcept
       -> const expected<std::set<std::filesystem::path>>;
-  [[nodiscard]] static auto parse_path(std::string&&) noexcept -> const std::filesystem::path;
-  [[nodiscard]] static auto parse_tilde(std::string&&) noexcept -> const std::filesystem::path;
+  [[nodiscard]] static auto parse_path(std::string_view&&) noexcept -> const std::filesystem::path;
+  [[nodiscard]] static auto parse_tilde(std::string_view&&) noexcept -> const std::filesystem::path;
 };
 } // namespace confie

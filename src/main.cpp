@@ -1,25 +1,22 @@
 #include "cli.hpp"
 #include "config.hpp"
 #include "error.hpp"
-#include "spdlog/spdlog.h"
 #include <print>
-#include <spdlog/common.h>
+#include <spdlog/spdlog.h>
 
-auto exit(confie::Error&& error) noexcept -> void {
-  std::println(stderr, "Error: {}", error.get_message());
-  std::exit(error.get_error());
+auto exit(confie::Error&& error) noexcept -> const void {
+  spdlog::trace("exit");
+  std::println(stderr, "Error: {}", error.what());
+  std::exit(std::move(error.error()));
 }
 
 auto main(int argc, char* argv[]) noexcept -> int {
-  spdlog::set_level(spdlog::level::debug); // FIX: this should be in confie::Cli
-  spdlog::set_pattern("[%d.%m.%Y %H:%M:%S:%e] [%^%l%$] %v");
-
   auto cli = confie::Cli::parse(argc, argv);
   if (!cli) {
     exit(std::move(cli.error()));
   }
 
-  const auto config = confie::Config::create(std::move(*cli));
+  auto config = confie::Config::create(std::move(*cli));
   if (!config) {
     exit(std::move(cli.error()));
   }

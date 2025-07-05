@@ -79,7 +79,7 @@ Linux install.
 ```sh
 # NOT IMPLEMENTED
 confie backup
-confie backup --configuration-file ./var.toml
+confie backup --config ./var.toml
 confie backup -c ./etc.toml
 confie backup --timestamp -c ./dotfiles.toml
 confie backup --watch -c ./dotfiles.toml # not recommended for cronjobs

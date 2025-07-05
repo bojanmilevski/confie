@@ -1,19 +1,21 @@
 #pragma once
 
 #include "error.hpp"
+#include <filesystem>
 #include <optional>
-#include <string_view>
+#include <string>
 
 namespace confie {
 struct Cli {
 public:
-  [[nodiscard]] static auto parse(int, char**) noexcept -> expected<Cli>;
-  [[nodiscard]] auto get_cfg_path() const& noexcept -> std::optional<std::string_view>;
+  [[nodiscard]] static auto parse(int, char**) noexcept -> const expected<Cli>;
+  [[nodiscard]] auto get_cfg_path() const& noexcept -> const std::filesystem::path;
 
 private:
-  std::optional<std::string_view> m_cfg_path;
-  std::string_view m_log_lvl;
+  std::filesystem::path m_cfg_path;
 
-  [[nodiscard]] explicit Cli(std::optional<std::string_view>&&, std::string_view&&) noexcept;
+  [[nodiscard]] explicit Cli(std::filesystem::path&&) noexcept;
+  [[nodiscard]] static auto parse_path(std::optional<std::string>&&) noexcept -> const expected<std::filesystem::path>;
+  static auto parse_log_level(std::optional<std::string>&&) noexcept -> const void;
 };
 } // namespace confie
